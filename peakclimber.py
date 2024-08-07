@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd 
 import seaborn as sns 
+import math as math
 import pybaselines
 from scipy.signal import find_peaks, savgol_filter
 from lmfit.models import ExponentialGaussianModel
@@ -74,8 +75,8 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
     z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
     return z
 
-def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,gamma_max=5,gamma_center=2.5,peak_variation=0.5,
-                    sigma_min=0.01,sigma_max=2,sigma_center=0.1,height_scale=0.3,height_scale_high=1.1):
+def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,gamma_max=5,gamma_center=2,peak_variation=0,
+                    sigma_min=0.01,sigma_max=2,sigma_center=0.05,height_scale=0.2,height_scale_high=0.9):
     """
     Fits n expoential gaussians to chromatographic data and returns list of parameters and the area of each peak 
     Inputs:
@@ -126,7 +127,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,
             #sigma can only be so large and small 
             pars['p'+str(n)+'_sigma'].set(value=sigma_center, min=sigma_min,max=sigma_max)
             #amplitude can only be so small to be a real peak. Height correction from Amplitude to height is roughly /gamma~2  
-            pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]/2, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
+            pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]*0.5, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
             pars['p'+str(n)+'_gamma'].set(value=gamma_center,max=gamma_max,min=gamma_min)
         #all subsequent peaks    
         else:
@@ -136,7 +137,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,
             #sigma can only be so large and small 
             pars['p'+str(n)+'_sigma'].set(value=sigma_center, min=sigma_min,max=sigma_max)
             #amplitude can only be so small to be a real peak Height correction from Amplitude to height is roughly /gamma~2  
-            pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]/2, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
+            pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]*0.5, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
             pars['p'+str(n)+'_gamma'].set(value=gamma_center,max=gamma_max,min=gamma_min)
     #Uses gradient descent to best fit model 
     try:
@@ -204,7 +205,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name):
             pars['p'+str(n)+'_amplitude'].set(value=parameters[n][2],vary=False)
             pars['p'+str(n)+'_gamma'].set(value=parameters[n][3],vary=False)
             #intial fit 
-    init = model.eval(pars, x=x)
+
     #to get best fit 
     out = model.fit(y, pars, x=x)
 
@@ -220,28 +221,28 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name):
     comps=out.eval_components(x=x) 
    
 
-    fig, axes = plt.subplots(2, 1, figsize=(25, 10))
+    fig, axes = plt.subplots(1, 1, figsize=(20, 10))
     
 
     #plots underlying data
-    axes[0].plot(x, y)
+    #axes[0].plot(x, y)
     #plots initial fit in orange with dashed line 
-    axes[0].plot(x, init, '--', label='initial fit')
+    #axes[0].plot(x, init, '--', label='initial fit')
     #plots best fit in green with solid line 
-    axes[0].plot(x, out.best_fit, '-', label='best fit')
-    axes[1].plot(x, out.best_fit, '-', label='best fit')
-    axes[0].legend()
+    #axes[0].plot(x, out.best_fit, '-', label='best fit')
+    axes.plot(x, out.best_fit, '-', label='best fit')
+    #axes[0].legend()
 
     #find the components of the best fit curve 
     #plots underlying data 
-    axes[1].plot(x, y)
+    axes.plot(x, y)
     areas=[]
     #plots each peak 
     for n in range(0,number_peaks):
-        axes[1].plot(x, comps['p'+str(n)+"_"], '--', label='Gaussian component '+str(n))
-        axes[1].fill_between(x, comps['p'+str(n)+"_"].min(), comps['p'+str(n)+"_"], alpha=0.5) 
+        axes.plot(x, comps['p'+str(n)+"_"], '--', label='Gaussian component '+str(n))
+        axes.fill_between(x, comps['p'+str(n)+"_"].min(), comps['p'+str(n)+"_"], alpha=0.5) 
         #adds peak location on the actual output graph 
-        axes[1].text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
+        axes.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
     plt.savefig(name+".png")
     return areas
 def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,shoulder=False, shoulder_cutoffs=None):
@@ -289,16 +290,26 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     data["Inverse Smoothed"]=data.loc[:,'Smoothed']*-1+max(data.loc[:, 'Smoothed'])
     data["Inverse Time Ave"]=data.loc[:,'Time Ave']*-1+max(data.loc[:, 'Time Ave'])
     data["Moved Time Ave"]=data.loc[:,'Time Ave']+abs(min(data.loc[:, 'Time Ave']))
+    data["contrast"]=data.loc[:, 'Smoothed']- 50*data.loc[:, 'Time Ave']
     
     if graph:
-        sns.lineplot(x=data['Time'], y=data['Time Ave'], label='Time Averaged First Derivative',ax=ax[1])
+        sns.lineplot(x=data['Time'], y=data['contrast'], label='Time Averaged First Derivative',ax=ax[1])
     #finds peaks from the time averaged derivative. These are really inflection points not actually peaks, but this
     #method will correctly identify shoulders
     #finds real peaks 
     peaks = find_peaks(data['Smoothed'],prominence=peak_prominence_cutoff,height=height_cutoff)[0]
-    peaks2 = find_peaks(data['Moved Time Ave'],prominence=peak_prominence_cutoff/5,height=height_cutoff/5)[0]
-    valleys2 = find_peaks(data['Inverse Time Ave'],prominence=peak_prominence_cutoff/5,height=height_cutoff/5)[0]
+    pre_shoulder_times=find_peaks(data['contrast'],prominence=peak_prominence_cutoff*5,height=height_cutoff)[0]
     shoulder_times=[]
+    for time in pre_shoulder_times:
+        add=True
+        for peak in peaks:
+            
+            if abs(peak-time)<100:
+                add=False
+                break
+        if add:
+            shoulder_times.append(time)
+    """
     for potential_shoulder in peaks2: 
 
         if data["Time Ave"].values[potential_shoulder]>=0:
@@ -311,30 +322,34 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
             pass 
         else:
             shoulder_times.append(potential_shoulder)
+    """
     #plots IDed peaks on the underlying data 
     if graph:
         sns.scatterplot(x=data["Time"].values[peaks], y=data["Smoothed"].values[peaks], s = 55,
                  label = 'Peak Centers',ax=ax[0])
         if shoulder:
-            sns.scatterplot(x=data["Time"].values[peaks], y=data["Smoothed"].values[peaks], s = 55,
-                     label = 'Peak Centers',ax=ax[0])
+            sns.scatterplot(x=data["Time"].values[shoulder_times], y=data["contrast"].values[shoulder_times], s = 55,
+                     label = 'Peak Shoulders',ax=ax[1])
             
         plt.show()
     
     times=data["Time"].values[peaks]
     heights=data["Value"].values[peaks]
+    print(shoulder_times)
     if shoulder:
-        for peak in shoulder_times:
-            np.append(peaks,peak)
-        
-        
-    
 
+        for peak in shoulder_times:
+            if peak not in peaks:
+                peaks=np.append(peaks,peak)
+        
+   
+    
+    times=data["Time"].values[peaks]
     heights=data["Value"].values[peaks]
         
     
     
-    
+
     #converts reference peaks into the time domain (rather than index )
     return times,heights
 def find_peak_windows(x,y,reference_peak_list,heights,start,end):
@@ -405,8 +420,8 @@ def find_peak_windows(x,y,reference_peak_list,heights,start,end):
         
 
     return windows 
-def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph=False,shoulder=False,prominence_cutoff=0.05,height_cutoff=1,gamma_min=0.01,gamma_max=5,gamma_center=2.5,peak_variation=0.5,
-                    sigma_min=0.01,sigma_max=2,sigma_center=0.1,height_scale=0.1,height_scale_high=1.1):
+def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph=False,shoulder=True,prominence_cutoff=0.05,height_cutoff=1,gamma_min=1,gamma_max=5,gamma_center=2,peak_variation=0.1,
+                    sigma_min=0.05,sigma_max=0.2,sigma_center=0.1,height_scale=0.2,height_scale_high=1):
     """
     
 
@@ -462,7 +477,7 @@ def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph
     #makes value axis 
     y=single_rep.loc[(single_rep['Time']>=start) & (single_rep['Time']<=end)]['Value']
     #denoises y-axis 
-    y=remove_noise(y)
+    #y=remove_noise(y)
     
 
     # if there are no input peaks, find peaks 
@@ -487,7 +502,7 @@ def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph
         heights=window[1]
         bounds=window[2]
         sub_x=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['Time']
-        sub_y=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['denoised_y']
+        sub_y=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['y']
         area=model_n_expgaus(sub_x,sub_y,len(locs),locs,heights,gamma_min,gamma_max,gamma_center,peak_variation,sigma_min,sigma_max,sigma_center,height_scale,height_scale_high)
         areas+=area
     #graphs if required 
