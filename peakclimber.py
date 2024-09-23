@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd 
 import seaborn as sns 
-import math as math
 import pybaselines
 from scipy.signal import find_peaks, savgol_filter
 from lmfit.models import ExponentialGaussianModel
@@ -32,7 +31,13 @@ def make_entry(filename, metadata):
     hplc=[]
     #iterates through the rows of the CSV and adds a dictionary entry for that time point 
     for row in csv.itertuples():
-        trace_dict={"Time":row[1],"Value":row[3]}
+        val=''
+        if isinstance(row[3],str):
+            val=float(row[3].replace(',',''))
+            
+        else: 
+            val=row[3]
+        trace_dict={"Time":row[1],"Value":val}
         for key in metadata: 
             trace_dict[key]=metadata[key]
         hplc.append(trace_dict)
@@ -75,13 +80,14 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
     z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
     return z
 
-def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,gamma_max=5,gamma_center=2,peak_variation=0,
-                    sigma_min=0.01,sigma_max=2,sigma_center=0.05,height_scale=0.2,height_scale_high=0.9):
+def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,gamma_max=10,gamma_center=5,peak_variation=0.1,
+                    sigma_min=0.01,sigma_max=1,sigma_center=0.05,height_scale=0.01,height_scale_high=0.8):
     """
     Fits n expoential gaussians to chromatographic data and returns list of parameters and the area of each peak 
     Inputs:
         x: Time axis, list 
         y: CAD, FLD axis, list
+
         number_peaks: Number of peaks, int 
         peak_locations: locations of peaks along x axis, float 
         peak_heights: Value on y axis of each peak, float 
@@ -142,6 +148,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,
     #Uses gradient descent to best fit model 
     try:
         out = model.fit(y, pars, x=x)
+        print(out.fit_report())
     except AttributeError:
         return None
 
@@ -163,7 +170,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.01,
         areas.append([center,sigma,amplitude, gamma,area])
     
     return(areas)
-def graph_n_expgaus(x,y,number_peaks,parameters,name):
+def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None):
     """
     Combines multiple exponential gaussian fits together to create graph output 
     Inputs: 
@@ -220,32 +227,36 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name):
 
     comps=out.eval_components(x=x) 
    
-
-    fig, axes = plt.subplots(1, 1, figsize=(20, 10))
+    if ax is None:
+        print('here')
+        fig, ax = plt.subplots(1, 1, figsize=(20, 10))
     
-
+    else:
+        ax=ax
     #plots underlying data
     #axes[0].plot(x, y)
     #plots initial fit in orange with dashed line 
     #axes[0].plot(x, init, '--', label='initial fit')
     #plots best fit in green with solid line 
     #axes[0].plot(x, out.best_fit, '-', label='best fit')
-    axes.plot(x, out.best_fit, '-', label='best fit')
+    ax.plot(x, out.best_fit, '-', label='best fit')
     #axes[0].legend()
 
     #find the components of the best fit curve 
     #plots underlying data 
-    axes.plot(x, y)
+    ax.plot(x, y)
     areas=[]
     #plots each peak 
     for n in range(0,number_peaks):
-        axes.plot(x, comps['p'+str(n)+"_"], '--', label='Gaussian component '+str(n))
-        axes.fill_between(x, comps['p'+str(n)+"_"].min(), comps['p'+str(n)+"_"], alpha=0.5) 
+        ax.plot(x, comps['p'+str(n)+"_"], '--', label='Gaussian component '+str(n))
+        ax.fill_between(x, comps['p'+str(n)+"_"].min(), comps['p'+str(n)+"_"], alpha=0.5) 
         #adds peak location on the actual output graph 
-        axes.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
+        ax.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
+    
+    plt.show()
     plt.savefig(name+".png")
-    return areas
-def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,shoulder=False, shoulder_cutoffs=None):
+    #return areas
+def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,shoulder=False, shoulder_cutoffs=None,ax=None):
     """
     
 
@@ -284,19 +295,24 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     data.loc[:, 'Time Ave']=savgol_filter(y, window_length=101, polyorder=3, deriv=1)
     #data.loc[:, 'Time Ave']+=min(data.loc[:, 'Time Ave'])
     if graph:
-        fig,ax=plt.subplots(2,1,figsize=(15,10))
+        if ax is None:
+            fig,ax=plt.subplots(1,1,figsize=(6,6))
+        else:
+            ax=ax
         #plots derivative 
-        sns.lineplot(x=data['Time'], y=data['Smoothed'], label='Smoothed',ax=ax[0])
+        sns.lineplot(x=data['Time'], y=data['Smoothed'], label='Smoothed',ax=ax)
     data["Inverse Smoothed"]=data.loc[:,'Smoothed']*-1+max(data.loc[:, 'Smoothed'])
     data["Inverse Time Ave"]=data.loc[:,'Time Ave']*-1+max(data.loc[:, 'Time Ave'])
     data["Moved Time Ave"]=data.loc[:,'Time Ave']+abs(min(data.loc[:, 'Time Ave']))
     data["contrast"]=data.loc[:, 'Smoothed']- 50*data.loc[:, 'Time Ave']
-    
+    """
     if graph:
         sns.lineplot(x=data['Time'], y=data['contrast'], label='Time Averaged First Derivative',ax=ax[1])
+    """
     #finds peaks from the time averaged derivative. These are really inflection points not actually peaks, but this
     #method will correctly identify shoulders
     #finds real peaks 
+    print(data['Smoothed'])
     peaks = find_peaks(data['Smoothed'],prominence=peak_prominence_cutoff,height=height_cutoff)[0]
     pre_shoulder_times=find_peaks(data['contrast'],prominence=peak_prominence_cutoff*5,height=height_cutoff)[0]
     shoulder_times=[]
@@ -304,7 +320,7 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
         add=True
         for peak in peaks:
             
-            if abs(peak-time)<100:
+            if abs(peak-time)<200:
                 add=False
                 break
         if add:
@@ -326,11 +342,12 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     #plots IDed peaks on the underlying data 
     if graph:
         sns.scatterplot(x=data["Time"].values[peaks], y=data["Smoothed"].values[peaks], s = 55,
-                 label = 'Peak Centers',ax=ax[0])
+                 label = 'Peak Centers',ax=ax)
+        """
         if shoulder:
             sns.scatterplot(x=data["Time"].values[shoulder_times], y=data["contrast"].values[shoulder_times], s = 55,
                      label = 'Peak Shoulders',ax=ax[1])
-            
+        """    
         plt.show()
     
     times=data["Time"].values[peaks]
@@ -388,7 +405,6 @@ def find_peak_windows(x,y,reference_peak_list,heights,start,end):
     current_window=[]
     current_height=[]
     current_loc=[]
-    
     current_index=0
     #starts lower bound at current index 
     bounds=[indices[current_index]]

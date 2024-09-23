@@ -8,6 +8,7 @@ Created on Mon May 27 11:53:58 2024
 
 import peakclimber
 import pandas as pd
+import tkinter as tk
 sample=True
 while sample:
     filename=input("Filename for desired fit: ")
@@ -23,7 +24,7 @@ while sample:
         
         x=hplc_df.loc[(hplc_df['Time']>=start_time) & (hplc_df['Time']<=end_time)& (hplc_df['Name']==sample_name)]['Time']
         y=hplc_df.loc[(hplc_df['Time']>=start_time) & (hplc_df['Time']<=end_time)& (hplc_df['Name']==sample_name)]['Value']
-        z=peakclimber.remove_noise(y,2000,1e11,20)
+        z=peakclimber.remove_noise(y,2000,1e10,20)
         df = pd.DataFrame()
         df["Time"]=x
         df["Value"]=z
