@@ -54,12 +54,12 @@ def import_file(sample_name,window):
         #toolbarFrame.grid(row=1,column=0)
         toolbar=tkagg.NavigationToolbar2Tk(canvas, window,pack_toolbar=False)
         toolbar.grid(row=1,column=0)
-  
-  
 
-        
+
+
+             
         ax=figure.add_subplot(111)
-        
+        ax.clear()
         ax.plot(x,y)
         ax.set_title(sample_name+ " Chromatograph")
         new_entry = tk.Frame(master=window)
@@ -125,7 +125,7 @@ def update_graph(start,end,hplc_df,sample_name,ax,canvas,window):
     hei.grid(row=0, column=3, sticky="w")
     peaks = tk.Button(master=prominenceheight, text="Identify Peaks", command=lambda:[find_peaks(x,z,start,end,hplc_df,hei.get(),prom.get(),ax,canvas,window),clear(prominenceheight)])
     peaks.grid(row=0,column=4)
-    
+    print(window.grid_slaves())
 
     
 def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
@@ -138,13 +138,17 @@ def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
 
     onward= tk.Frame(master=window)
     prominenceheight = tk.Frame(master=window)
+    settings =tk.Frame(master=window)
     prominenceheight.grid(row=2, column=0, padx=10)
     onward.grid(row=3,column=0, padx=10)
+    settings.grid(row=4,column=0,padx=10)
     prom= tk.Entry(master=prominenceheight,width=10)
     prom.insert(0, '0.05')
     
 
     lbl_prom = tk.Label(master=prominenceheight, text="Prominence (default 0.05):")
+    Hovertip(lbl_prom,"Prominence  measures the height of a mountain or hill's summit relative to the lowest contour line \n encircling it but containing no higher summit within it. The measure here is as of a percentage of the largest peak. \n Peaks that do not meet the prominence requirement are excluded from the analysis")
+
 
     lbl_prom.grid(row=0, column=0, sticky="w")
     prom.grid(row=0, column=1, sticky="w")
@@ -153,14 +157,29 @@ def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
     
 
     lbl_hei = tk.Label(master=prominenceheight, text="Height (default 1):")
-
+    Hovertip(lbl_hei,"Minimum height for a peak to be included in the analysis")
     lbl_hei.grid(row=0, column=2, sticky="w")
     hei.grid(row=0, column=3, sticky="w")
+    
+    lbl_variation=tk.Label(master=settings, text="Center variation")
+    Hovertip(lbl_hei,"How much peak center is allowed to vary from the identified value")
+    variation=tk.Entry(master=settings,width=10)
+    variation.insert(0,'0.1')
+    variation.grid(row=0,column=1)
+    lbl_variation.grid(row=0,column=0)
+    
     peaks = tk.Button(master=prominenceheight, text="Reidentify Peaks", command=lambda:[find_peaks(x,z,start,end,hplc_df,hei.get(),prom.get(),ax,canvas,window),clear(prominenceheight)])
     peaks.grid(row=0,column=4)
-    fit=tk.Button(master=onward,text="Fit Peaks",command=lambda:[clear(prominenceheight),clear(onward),fit_peaks(x,z,start,end,time,heights,hplc_df,sample_name,ax,canvas,window)])
-    fit.grid(row=0,column=0)
-def fit_peaks(x,y,start,end,time,heights,hplc_df,sample_name,ax,canvas,window):
+    var1=tk.IntVar()
+    check=tk.Checkbutton(master=onward,variable=var1, text="Graph text",onvalue=1,offvalue=0)
+    Hovertip(check,"To include peak centers on graph or not")
+    fit=tk.Button(master=onward,text="Fit Peaks",command=lambda:[clear(prominenceheight),fit_peaks(x,z,start,end,time,heights,hplc_df,sample_name,ax,canvas,window,var1.get(),variation.get()),clear(onward),clear(settings)])
+    check.grid(row=0,column=0)
+    fit.grid(row=0,column=1)
+
+    
+def fit_peaks(x,y,start,end,time,heights,hplc_df,sample_name,ax,canvas,window,text,variation):
+    variation=float(variation)
     areas=[]
     #find peak windows to improve runtime 
     windows=peakclimber.find_peak_windows(x,y,time,heights,float(start),float(end))
@@ -179,14 +198,15 @@ def fit_peaks(x,y,start,end,time,heights,hplc_df,sample_name,ax,canvas,window):
         bounds=widow[2]
         sub_x=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['Time']
         sub_y=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['denoised_y']
-        area=peakclimber.model_n_expgaus(sub_x,sub_y,len(locs),locs,heights)
+        area=peakclimber.model_n_expgaus(sub_x,sub_y,len(locs),locs,heights,peak_variation=variation)
         areas+=area
     
 
 
     
     ax.clear()
-    peakclimber.graph_n_expgaus(x,y,len(areas),areas,sample_name,ax=ax)
+    peakclimber.graph_n_expgaus(x,y,len(areas),areas,sample_name,ax=ax,add_text=text)
+    
     canvas.draw()
     locs=[]
     f_areas=[]
@@ -229,7 +249,7 @@ def save(locs,f_areas):
     filer=tk.Frame(master=window)
     filer.grid(row=2,column=0)
     
-    new_file=tk.Button(master=filer,text="New File?",command=lambda:[import_file('',window)])
+    new_file=tk.Button(master=filer,text="New File?",command=lambda:[clear(filer),import_file('',window)])
     exiter=tk.Button(master=filer,text="Exit?",command=lambda:[window.quit(),window.destroy,sys.exit()])
     new_file.grid(row=0,column=0)
     exiter.grid(row=0,column=1)
@@ -238,8 +258,8 @@ def save(locs,f_areas):
     
 def clear(level):
 
-    list = level.grid_slaves()
-    for l in list:
+    liste = level.grid_slaves()
+    for l in liste:
         l.destroy()      
  
     
@@ -259,6 +279,7 @@ import_button = tk.Button(master=frm_entry, text="Import File", command=lambda:[
 import_button.grid(row=4,column=0)
 
 window.mainloop()
+
 
    
 

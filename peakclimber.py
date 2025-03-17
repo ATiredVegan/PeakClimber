@@ -3,8 +3,11 @@ import numpy as np
 import pandas as pd 
 import seaborn as sns 
 import pybaselines
+import math
 from scipy.signal import find_peaks, savgol_filter
+from scipy import special
 from lmfit.models import ExponentialGaussianModel
+import lmfit
 
 plt.rcParams.update(plt.rcParamsDefault)
 plt.rcParams["font.family"] = "Arial"
@@ -79,6 +82,8 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
     z=low_pass_filter(data,band_limit,sampling_rate)
     z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
     return z
+def bemg(x,amplitude,center,sigma,gamma,sign):
+    return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(math.copysign(1, sign)*gamma))*special.erfc((-1*math.copysign(1, sign)*(x-center)/sigma-sigma/(math.copysign(1, sign)*gamma))/math.sqrt(2))*math.copysign(1, sign)*amplitude/(2*math.copysign(1, sign)*gamma)
 
 def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,gamma_max=10,gamma_center=5,peak_variation=0.1,
                     sigma_min=0.01,sigma_max=1,sigma_center=0.05,height_scale=0.01,height_scale_high=0.8):
@@ -123,7 +128,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
     #goes from max to min number of peaks, finds bic, removes smallest peak, repeat 
     model=''
     for n in range(0,number_peaks):
-        gaus=ExponentialGaussianModel(prefix='p'+str(n)+"_")
+        gaus=lmfit.Model(bemg,prefix='p'+str(n)+"_")
         #addition of first model for first peak
         if model=='':
             model=gaus
@@ -135,6 +140,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
             #amplitude can only be so small to be a real peak. Height correction from Amplitude to height is roughly /gamma~2  
             pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]*0.5, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
             pars['p'+str(n)+'_gamma'].set(value=gamma_center,max=gamma_max,min=gamma_min)
+            pars['p'+str(n)+'_sign'].set(value=1,max=1,min=-1,brute_step=2)
         #all subsequent peaks    
         else:
             model+=gaus
@@ -145,6 +151,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
             #amplitude can only be so small to be a real peak Height correction from Amplitude to height is roughly /gamma~2  
             pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]*0.5, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
             pars['p'+str(n)+'_gamma'].set(value=gamma_center,max=gamma_max,min=gamma_min)
+            pars['p'+str(n)+'_sign'].set(value=1,max=1,min=-1,brute_step=2)
     #Uses gradient descent to best fit model 
     try:
         out = model.fit(y, pars, x=x)
@@ -167,10 +174,13 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
         sigma=out.params['p'+str(n)+"_sigma"].value
         amplitude=out.params['p'+str(n)+"_amplitude"].value
         gamma=out.params['p'+str(n)+"_gamma"].value
-        areas.append([center,sigma,amplitude, gamma,area])
+        signs=out.params['p'+str(n)+'_sign'].value
+        areas.append([center,sigma,amplitude, gamma,area,signs])
     
     return(areas)
-def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None):
+
+
+def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None,add_text=1):
     """
     Combines multiple exponential gaussian fits together to create graph output 
     Inputs: 
@@ -186,12 +196,12 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None):
     Returns: 
         Nothing
     """
-  
+
  
-    
+
     model=''
     for n in range(0,number_peaks):
-        gaus=ExponentialGaussianModel(prefix='p'+str(n)+"_")
+        gaus=lmfit.Model(bemg,prefix='p'+str(n)+"_")
         #addition of first model for first peak
         if model=='':
             model=gaus
@@ -203,6 +213,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None):
             #amplitude can only be so small to be a real peak 
             pars['p'+str(n)+'_amplitude'].set(value=parameters[n][2],vary=False)
             pars['p'+str(n)+'_gamma'].set(value=parameters[n][3],vary=False)
+            pars['p'+str(n)+'_sign'].set(value=parameters[n][4],vary=False)
         #all subsequent peaks    
         else:
             model+=gaus
@@ -211,6 +222,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None):
             pars['p'+str(n)+'_sigma'].set(value=parameters[n][1],vary=False)
             pars['p'+str(n)+'_amplitude'].set(value=parameters[n][2],vary=False)
             pars['p'+str(n)+'_gamma'].set(value=parameters[n][3],vary=False)
+            pars['p'+str(n)+'_sign'].set(value=parameters[n][4],vary=False)
             #intial fit 
 
     #to get best fit 
@@ -245,13 +257,14 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None):
     #find the components of the best fit curve 
     #plots underlying data 
     ax.plot(x, y)
-    areas=[]
+
     #plots each peak 
     for n in range(0,number_peaks):
         ax.plot(x, comps['p'+str(n)+"_"], '--', label='Gaussian component '+str(n))
         ax.fill_between(x, comps['p'+str(n)+"_"].min(), comps['p'+str(n)+"_"], alpha=0.5) 
         #adds peak location on the actual output graph 
-        ax.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
+        if add_text==1:
+            ax.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
     
     plt.show()
     plt.savefig(name+".png")
@@ -296,7 +309,8 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     #data.loc[:, 'Time Ave']+=min(data.loc[:, 'Time Ave'])
     if graph:
         if ax is None:
-            fig,ax=plt.subplots(1,1,figsize=(6,6))
+            print('here')
+            fig,ax=plt.subplots(1,1,figsize=(10,10))
         else:
             ax=ax
         #plots derivative 
@@ -312,7 +326,7 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     #finds peaks from the time averaged derivative. These are really inflection points not actually peaks, but this
     #method will correctly identify shoulders
     #finds real peaks 
-    print(data['Smoothed'])
+
     peaks = find_peaks(data['Smoothed'],prominence=peak_prominence_cutoff,height=height_cutoff)[0]
     pre_shoulder_times=find_peaks(data['contrast'],prominence=peak_prominence_cutoff*5,height=height_cutoff)[0]
     shoulder_times=[]
@@ -352,7 +366,6 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     
     times=data["Time"].values[peaks]
     heights=data["Value"].values[peaks]
-    print(shoulder_times)
     if shoulder:
 
         for peak in shoulder_times:
@@ -437,7 +450,7 @@ def find_peak_windows(x,y,reference_peak_list,heights,start,end):
 
     return windows 
 def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph=False,shoulder=True,prominence_cutoff=0.05,height_cutoff=1,gamma_min=1,gamma_max=5,gamma_center=2,peak_variation=0.1,
-                    sigma_min=0.05,sigma_max=0.2,sigma_center=0.1,height_scale=0.2,height_scale_high=1):
+                    sigma_min=0.05,sigma_max=0.2,sigma_center=0.1,height_scale=0.2,height_scale_high=1,ax=None):
     """
     
 
@@ -523,7 +536,7 @@ def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph
         areas+=area
     #graphs if required 
     if graph:
-        graph_n_expgaus(x,y,len(areas),areas,name)
+        graph_n_expgaus(x,y,len(areas),areas,name,ax=ax)
     locs=[]
     f_areas=[]
     for peak in areas:
