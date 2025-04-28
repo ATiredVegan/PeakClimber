@@ -82,11 +82,11 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
     z=low_pass_filter(data,band_limit,sampling_rate)
     z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
     return z
-def bemg(x,amplitude,center,sigma,gamma,sign):
-    return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(math.copysign(1, sign)*gamma))*special.erfc((-1*math.copysign(1, sign)*(x-center)/sigma-sigma/(math.copysign(1, sign)*gamma))/math.sqrt(2))*math.copysign(1, sign)*amplitude/(2*math.copysign(1, sign)*gamma)
+def bemg(x,amplitude,center,sigma,gamma):
+    return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(gamma))*special.erfc((-1*math.copysign(1, gamma)*(x-center)/sigma-sigma/(gamma))/math.sqrt(2))*math.copysign(1, gamma)*amplitude/(2*gamma)
 
-def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,gamma_max=10,gamma_center=5,peak_variation=0.1,
-                    sigma_min=0.01,sigma_max=1,sigma_center=0.05,height_scale=0.01,height_scale_high=0.8):
+def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,gamma_max=2,gamma_center=0.1,peak_variation=0.1,
+                    sigma_min=0.005,sigma_max=1,sigma_center=0.1,height_scale=0.01,height_scale_high=0.8):
     """
     Fits n expoential gaussians to chromatographic data and returns list of parameters and the area of each peak 
     Inputs:
@@ -140,7 +140,6 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
             #amplitude can only be so small to be a real peak. Height correction from Amplitude to height is roughly /gamma~2  
             pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]*0.5, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
             pars['p'+str(n)+'_gamma'].set(value=gamma_center,max=gamma_max,min=gamma_min)
-            pars['p'+str(n)+'_sign'].set(value=1,max=1,min=-1,brute_step=2)
         #all subsequent peaks    
         else:
             model+=gaus
@@ -151,10 +150,9 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
             #amplitude can only be so small to be a real peak Height correction from Amplitude to height is roughly /gamma~2  
             pars['p'+str(n)+'_amplitude'].set(value=peak_heights[n]*0.5, min=height_scale*peak_heights[n],max=peak_heights[n]*height_scale_high)
             pars['p'+str(n)+'_gamma'].set(value=gamma_center,max=gamma_max,min=gamma_min)
-            pars['p'+str(n)+'_sign'].set(value=1,max=1,min=-1,brute_step=2)
     #Uses gradient descent to best fit model 
     try:
-        out = model.fit(y, pars, x=x)
+        out = model.fit(y, pars, x=x,nan_policy='omit')
         print(out.fit_report())
     except AttributeError:
         return None
@@ -174,8 +172,8 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
         sigma=out.params['p'+str(n)+"_sigma"].value
         amplitude=out.params['p'+str(n)+"_amplitude"].value
         gamma=out.params['p'+str(n)+"_gamma"].value
-        signs=out.params['p'+str(n)+'_sign'].value
-        areas.append([center,sigma,amplitude, gamma,area,signs])
+
+        areas.append([center,sigma,amplitude, gamma,area/6])
     
     return(areas)
 
@@ -213,7 +211,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None,add_text=1):
             #amplitude can only be so small to be a real peak 
             pars['p'+str(n)+'_amplitude'].set(value=parameters[n][2],vary=False)
             pars['p'+str(n)+'_gamma'].set(value=parameters[n][3],vary=False)
-            pars['p'+str(n)+'_sign'].set(value=parameters[n][4],vary=False)
+       
         #all subsequent peaks    
         else:
             model+=gaus
@@ -222,7 +220,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None,add_text=1):
             pars['p'+str(n)+'_sigma'].set(value=parameters[n][1],vary=False)
             pars['p'+str(n)+'_amplitude'].set(value=parameters[n][2],vary=False)
             pars['p'+str(n)+'_gamma'].set(value=parameters[n][3],vary=False)
-            pars['p'+str(n)+'_sign'].set(value=parameters[n][4],vary=False)
+        
             #intial fit 
 
     #to get best fit 
