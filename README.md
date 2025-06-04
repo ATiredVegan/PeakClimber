@@ -21,4 +21,4 @@ There are three python files and a bash script in this repository: peakclimber.p
 8.	The final screen will display your fit: the underlying trace is present in orange, the overall fit in blue, and the subcomponents as the shaded regions. The areas and runtimes of each peak are shown below. You can save this table as text file or csv by hitting the save file button 
 9.	The program will then ask you if you want to run another file or exit
 
-I’ve attached two text files that works on my machine: one of three overlapping fatty acids, and another of a whole fly chromatograph. Please reach out or create github issue if you have any problems. 
+I’ve attached two text files that works on my machine: one of three overlapping fatty acids, and another of a whole fly chromatograph. Please reach out or create a github issue if you have any problems. 
