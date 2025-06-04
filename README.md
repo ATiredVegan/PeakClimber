@@ -10,11 +10,12 @@ To provide step-by-step command line instructions for the average user to analyz
 1.	After the HPLC run, appropriately name each trace. Move your data to a proper storage location (Data backup, server, Cloud service, etc.)
 2.	Copy your data folder to your Desktop to work locally from now on.
 a.	Making an additional copy of the HPLC traces folder on the Desktop can make navigating to the data via terminal more efficient
-3.	Download gui_main.py, peakclimber.py, and setup.sh from https://github.com/ATiredVegan/PeakClimber
-4.	After download, place gui_main.py and peakclimber.py in the same Desktop folder as your HPLC traces
+3.	Download gui_main.py, peakclimber.py, requirements.txt, and setup.sh from https://github.com/ATiredVegan/PeakClimber
+4.	After download, place gui_main.py, peakclimber.py, requirements.txt, and setup.sh in the same Desktop folder as your HPLC traces
 a.	For this example, I am analyzing 4 samples (labeled 1, 2, 5, and 6)
 
-<img width="540" alt="image" src="https://github.com/user-attachments/assets/51f58dc2-0307-4be5-9628-1c5a40e69059" />
+
+<img width="416" alt="image" src="https://github.com/user-attachments/assets/9a716257-932c-4059-80a6-aa6111bdb4de" />
   
 Figure 1: Screenshot of HPLC traces folder on local Desktop containing Python scripts and data
 
@@ -24,33 +25,40 @@ Figure 1: Screenshot of HPLC traces folder on local Desktop containing Python sc
 a.	Terminal is the window in which you enter commands into the computer to process
 b.	ctrl + alt + “t” will also open the terminal application quickly on a PC; command + “t” will open a new Terminal window on a Mac
 
-<img width="464" alt="image" src="https://github.com/user-attachments/assets/4cfadccb-3dc2-43be-a711-546dfb357e79" />
- 
+<img width="484" alt="image" src="https://github.com/user-attachments/assets/2ea36c60-5b05-4fda-8a7d-874091da5fcd" />
+
 Figure 2: Screenshot of the Terminal application window upon opening.
 
-2.	Make sure you have Python (download from web, version 3.12.7) and pip installed to run this package.
+2. Make sure you have Python and pip installed to run this package. You will want to install python by downloading version 3.12.7 from this link (https://www.python.org/downloads/release/python-3127/). Once you have python installed, run the following command to install pip
 
 > python -m pip install --upgrade pip
 
-3. Install all dependencies. Nagivate to the folder containing PeakClimber and run the bash script setup.sh by typiing
+
+3.	In terminal, navigate to your data using cd commands:
+			
+>cd ~/Desktop
+>
+>cd Ludington_Lab/PeakClimber/src/package_1
+
+
+
+<img width="222" alt="image" src="https://github.com/user-attachments/assets/23a0fc90-18eb-43d1-8cbe-780eb5e3b819" />
+
+Figure 3: Screenshot of Terminal to navigate to HPLC data folder and listing out the contents of the folder. 
+
+4. Install all dependencies. Run the bash script setup.sh by typing. You only need to do this once.
 
 > bash setup.sh 
 
-5.	In terminal, navigate to your data using cd commands:
-			
-> cd ~/Desktop
-cd HPLC_Intestines
 
-<img width="475" alt="image" src="https://github.com/user-attachments/assets/e7e2d6b4-a3d8-4920-8f03-eb90e3a06eff" />
- 
-Figure 3: Screenshot of Terminal to navigate to HPLC data folder and listing out the contents of the folder. 
 
-4.	Now that you’re in your data folder, you can run PeakClimber!
+5. Now that you’re in your data folder, you can run PeakClimber!
 
 >python gui_main.py
 
-<img width="469" alt="image" src="https://github.com/user-attachments/assets/40e92769-0b25-47f0-ba47-7bf5e32972d8" />
- 
+<img width="472" alt="image" src="https://github.com/user-attachments/assets/5071ab0b-acbe-4d7b-ab16-eb624c149e03" />
+
+
 Figure 4: Screenshot of Terminal to run PeakClimber.
 
 5.	Once you hit “enter”, a new window should pop up that looks like this:
@@ -63,7 +71,7 @@ a.	It is not necessary to enter anything into the sample name box. If you do, fu
 
 b.	How do I know which file to choose from? If you’re interested in the fluorescent signal, you’ll open Emission.txt files. If you’re interested in total lipids (non-fluorescent), you’ll import the CAD file for that sample.
 
-6.	Once you import your first data file, PeakClimber will load the trace in this window 9Figure 6):
+6.	Once you import your first data file, PeakClimber will load the trace in this window (Figure 6):
 
 <img width="488" alt="image" src="https://github.com/user-attachments/assets/6ae0a0f6-94ea-4e73-b89b-77616b1667dc" />
  
@@ -83,7 +91,7 @@ Figure 7: Screenshot of HPLC trace cropped to the region of 5 min to 50 min as s
    
 a.	In Figure 8, I used the default values for prominence and height and then I ran “identify peaks.”
 
-b.	Prominence is the minimum distance between a peak and the nearest valley in order for the peak to be counted as real. Height is the minimum peak height that will be counted. These values can be changed as many times as you like until you are satisfied with the identified peaks. 
+b.	Prominence is the minimum distance between a peak and the nearest valley. Height is the minimum peak height that will be counted. These values can be changed as many times as you like until you are satisfied with the identified peaks. 
 
 <img width="510" alt="image" src="https://github.com/user-attachments/assets/715ace42-9e5e-4290-a583-2aeffce4c07e" />
  
@@ -93,7 +101,7 @@ Figure 8: Screenshot of HPLC trace cropped to the selected time region. Peak cen
  
 Figure 8.1: Screenshot of blank window labeled Figure 1 that may pop up. Close just this window to continue identifying peaks on your trace. This is a known bug!
 
-9.	On the next screen you will have a list of parameters options as shown in Figure 9. The only two options you should worry about initially are the Graph text and Fronted peaks. The former controls if you have text on your graphs (peak retention times), the later controls if your tail for ALL PEAKS is before or after the peak center. Unfortunately there is an undefined region of the BEMG function around 0, so PeakClimber currently can only fit fronted or tailed peaks, but not a mixture. The other parameters control your fit: you should leave these as the default unless you are not satisfied with the quality of the fit (more in the FAQ below). 
+9.	On the next screen you will have a list of parameters options as shown in Figure 9. The only two options you should worry about initially are the Graph text and Fronted peaks. The former controls if you have text on your graphs (peak retention times), the later controls if your tail for ALL PEAKS is before or after the peak center. Unfortunately, there is an undefined region of the BEMG function around 0, so PeakClimber currently can only fit fronted or tailed peaks, but not a mixture. The other parameters control your fit: you should leave these as the default unless you are not satisfied with the quality of the fit (more in the FAQ below). 
   
 <img width="540" alt="image" src="https://github.com/user-attachments/assets/aea31c73-db17-451b-bc86-1a0315216002" />
 
@@ -106,7 +114,7 @@ Figure 9: Parameter options for your fit. The checkboxes control if you see text
 
 Figure 10: Screenshot of the fit peaks of the HPLC trace displaying the fit: the underlying trace is present in orange, the overall fit in blue, and the subcomponents are the shaded regions. The areas and runtimes of each peak are shown in a table below the trace image. 
 
-10.	Choose “save fit” to save the data to a csv file.
+11.	Choose “save fit” to save the data to a csv file.
     
 a.	PeakClimber will prompt you to name this .csv file and you can save it in the same folder as you the original HPLC traces.
 
