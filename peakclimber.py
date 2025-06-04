@@ -5,7 +5,8 @@ import seaborn as sns
 import pybaselines
 import math
 from scipy.signal import find_peaks, savgol_filter
-from scipy import special
+from scipy import special	
+from scipy.signal import get_window
 from lmfit.models import ExponentialGaussianModel
 import lmfit
 
@@ -60,9 +61,9 @@ def low_pass_filter(data, band_limit, sampling_rate) -> np.ndarray:
     Outputs: 
         np array that has been FFTed 
     """
-    cutoff_index = int(band_limit * data.size / sampling_rate)
-    F = np.fft.rfft(data)
-    F[cutoff_index + 1:] = 0
+    #cutoff_index = int(band_limit * data.size / sampling_rate)
+    F = np.fft.rfft(data*np.kaiser(data.size,0))
+    #F[cutoff_index + 1:] = 0
    
     return np.fft.irfft(F, n=data.size).real
 def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=500):
@@ -85,7 +86,7 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
 def bemg(x,amplitude,center,sigma,gamma):
     return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(gamma))*special.erfc((-1*math.copysign(1, gamma)*(x-center)/sigma-sigma/(gamma))/math.sqrt(2))*math.copysign(1, gamma)*amplitude/(2*gamma)
 
-def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,gamma_max=2,gamma_center=0.1,peak_variation=0.1,
+def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,gamma_max=2,gamma_center=1,peak_variation=0.1,
                     sigma_min=0.005,sigma_max=1,sigma_center=0.1,height_scale=0.01,height_scale_high=0.8):
     """
     Fits n expoential gaussians to chromatographic data and returns list of parameters and the area of each peak 
