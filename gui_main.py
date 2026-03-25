@@ -91,7 +91,7 @@ def update_graph(start,end,hplc_df,sample_name,ax,canvas,window):
     
     x=hplc_df.loc[(hplc_df['Time']>=start_time) & (hplc_df['Time']<=end_time)& (hplc_df['Name']==sample_name)]['Time']
     y=hplc_df.loc[(hplc_df['Time']>=start_time) & (hplc_df['Time']<=end_time)& (hplc_df['Name']==sample_name)]['Value']
-    z=peakclimber.remove_noise(y,2000,1e10,20)
+    z=peakclimber.remove_noise(y,2000,1e10,2)
     df = pd.DataFrame()
     df["Time"]=x
     df["Value"]=z
@@ -108,9 +108,9 @@ def update_graph(start,end,hplc_df,sample_name,ax,canvas,window):
     prominenceheight = tk.Frame(master=window)
     prominenceheight.grid(row=2, column=0, padx=10)
     prom= tk.Entry(master=prominenceheight,width=10)
-    prom.insert(0, '0.05')
+    prom.insert(0, str(max(y)*0.01))
 
-    lbl_prom = tk.Label(master=prominenceheight, text="Prominence (default 0.05):")
+    lbl_prom = tk.Label(master=prominenceheight, text="Prominence (default 1% max height):")
     Hovertip(lbl_prom,"Prominence  measures the height of a mountain or hill's summit relative to the lowest contour line \n encircling it but containing no higher summit within it. The measure here is as of a percentage of the largest peak. \n Peaks that do not meet the prominence requirement are excluded from the analysis")
 
     lbl_prom.grid(row=0, column=0, sticky="w")
@@ -147,7 +147,7 @@ def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
     prom.insert(0, str(prominence))
     
 
-    lbl_prom = tk.Label(master=prominenceheight, text="Prominence (default 0.05):")
+    lbl_prom = tk.Label(master=prominenceheight, text="Prominence (1% of max default height):")
     Hovertip(lbl_prom,"Prominence  measures the height of a mountain or hill's summit relative to the lowest contour line \n encircling it but containing no higher summit within it. The measure here is as of a percentage of the largest peak. \n Peaks that do not meet the prominence requirement are excluded from the analysis")
 
 
@@ -266,6 +266,7 @@ def fit_peaks(x,y,start,end,time,heights,hplc_df,sample_name,ax,canvas,window,te
     saver.grid(row=2,column=0)
     save_button = tk.Button(master=saver, text="Save Fit", command=lambda:[clear(saver),save(locs,f_areas),clear(tree_frame)])
     save_button.grid(row=0,column=0)
+    
     
     tree_frame = tk.Frame(window)
     tree_frame.grid(row=3,column=0)

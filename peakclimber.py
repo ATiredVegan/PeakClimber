@@ -64,7 +64,7 @@ def low_pass_filter(data, band_limit, sampling_rate) -> np.ndarray:
     #F[cutoff_index + 1:] = 0
    
     return np.fft.irfft(F, n=data.size).real
-def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=500):
+def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=10, sampling_rate=500):
     """
     Denoises chromatographic trace with high-pass (pybaselines) and low-pass (low_pass_filter FFT) filters 
     Inputs: 
@@ -77,10 +77,9 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
         z numpy array with transformed signal 
     """
     k=pybaselines.whittaker.psalsa(data,lam=lamba)[0]
-    data=data
+    data=data-k
     z=low_pass_filter(data,band_limit,sampling_rate)
-    z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
-    return data
+    return z
 def bemg(x,amplitude,center,sigma,gamma):
     return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(gamma))*special.erfc((-1*math.copysign(1, gamma)*(x-center)/sigma-sigma/(gamma))/math.sqrt(2))*math.copysign(1, gamma)*amplitude/(2*gamma)
 
