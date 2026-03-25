@@ -91,7 +91,6 @@ def update_graph(start,end,hplc_df,sample_name,ax,canvas,window):
     
     x=hplc_df.loc[(hplc_df['Time']>=start_time) & (hplc_df['Time']<=end_time)& (hplc_df['Name']==sample_name)]['Time']
     y=hplc_df.loc[(hplc_df['Time']>=start_time) & (hplc_df['Time']<=end_time)& (hplc_df['Name']==sample_name)]['Value']
-
     z=peakclimber.remove_noise(y,2000,1e10,20)
     df = pd.DataFrame()
     df["Time"]=x
@@ -117,10 +116,10 @@ def update_graph(start,end,hplc_df,sample_name,ax,canvas,window):
     lbl_prom.grid(row=0, column=0, sticky="w")
     prom.grid(row=0, column=1, sticky="w")
     hei= tk.Entry(master=prominenceheight,width=10)
-    hei.insert(0, '1')
+    hei.insert(0, str(max(y)*0.1))
     
 
-    lbl_hei = tk.Label(master=prominenceheight, text="Height (default 1):")
+    lbl_hei = tk.Label(master=prominenceheight, text="Height (default 1/10 max height):")
     Hovertip(lbl_hei,"Minimum height for a peak to be included in the analysis")
 
     lbl_hei.grid(row=0, column=2, sticky="w")
@@ -145,7 +144,7 @@ def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
     onward.grid(row=3,column=0, padx=10)
     settings.grid(row=4,column=0,padx=10)
     prom= tk.Entry(master=prominenceheight,width=10)
-    prom.insert(0, '0.05')
+    prom.insert(0, str(prominence))
     
 
     lbl_prom = tk.Label(master=prominenceheight, text="Prominence (default 0.05):")
@@ -155,7 +154,7 @@ def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
     lbl_prom.grid(row=0, column=0, sticky="w")
     prom.grid(row=0, column=1, sticky="w")
     hei= tk.Entry(master=prominenceheight,width=10)
-    hei.insert(0, '1')
+    hei.insert(0, str(height))
     
 
     lbl_hei = tk.Label(master=prominenceheight, text="Height (default 1):")
@@ -206,23 +205,23 @@ def find_peaks(x,z,start,end,hplc_df,height,prominence,ax,canvas,window):
     smax.grid(row=1,column=5)
     lbl_smax.grid(row=1,column=4)
     
-    lbl_scen=tk.Label(master=settings, text="Sigma Center")
+    lbl_scen=tk.Label(master=settings, text="Sigma default")
     Hovertip(lbl_smax,"Initial sigma value for fit optimization (overrides default)")
     scen=tk.Entry(master=settings,width=10)
     scen.insert(0,'0.1')
     scen.grid(row=2,column=5)
     lbl_scen.grid(row=2,column=4)
     
-    peaks = tk.Button(master=prominenceheight, text="Reidentify Peaks", command=lambda:[find_peaks(x,z,start,end,hplc_df,hei.get(),prom.get(),ax,canvas,window),clear(prominenceheight)])
+    peaks = tk.Button(master=prominenceheight, text="Reidentify peaks", command=lambda:[find_peaks(x,z,start,end,hplc_df,hei.get(),prom.get(),ax,canvas,window),clear(prominenceheight)])
     peaks.grid(row=0,column=4)
     var1=tk.IntVar()
     var2=tk.IntVar()
     check=tk.Checkbutton(master=onward,variable=var1, text="Graph text",onvalue=1,offvalue=0)
     Hovertip(check,"To include peak centers on graph or not")
-    front=tk.Checkbutton(master=onward,variable=var2, text="Fronted Peaks?",onvalue=-1,offvalue=1)
+    front=tk.Checkbutton(master=onward,variable=var2, text="Fronted peaks?",onvalue=-1,offvalue=1)
     front.deselect()
     Hovertip(front,"fronted peaks. Makes all gamma values negative")
-    fit=tk.Button(master=onward,text="Fit Peaks",command=lambda:[clear(prominenceheight),fit_peaks(x,z,start,end,time,heights,hplc_df,sample_name,ax,canvas,window,var1.get(),variation.get(),gmin.get(),gmax.get(),gcen.get(),smin.get(),smax.get(),scen.get(),var2.get()),clear(onward),clear(settings)])
+    fit=tk.Button(master=onward,text="Fit peaks",command=lambda:[clear(prominenceheight),fit_peaks(x,z,start,end,time,heights,hplc_df,sample_name,ax,canvas,window,var1.get(),variation.get(),gmin.get(),gmax.get(),gcen.get(),smin.get(),smax.get(),scen.get(),var2.get()),clear(onward),clear(settings)])
     check.grid(row=0,column=0)
     front.grid(row=0,column=1)
     fit.grid(row=0,column=2)
@@ -241,11 +240,10 @@ def fit_peaks(x,y,start,end,time,heights,hplc_df,sample_name,ax,canvas,window,te
 
 
     #goes through each window and finds area for each 
-    for widow in windows:
-
-        locs=widow[0]
-        heights=widow[1]
-        bounds=widow[2]
+    for screen_window in windows:
+        locs=screen_window[0]
+        heights=screen_window[1]
+        bounds=screen_window[2]
         sub_x=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['Time']
         sub_y=df.loc[(df['Time']>=bounds[0]) & (df['Time']<bounds[1])]['denoised_y']
         area=peakclimber.model_n_expgaus(sub_x,sub_y,len(locs),locs,heights,peak_variation=variation,gamma_min=float(gmin)*fronted,gamma_max=float(gmax)*fronted,gamma_center=fronted*float(gcen),sigma_min=float(smin),sigma_max=float(smax),sigma_center=float(scen))

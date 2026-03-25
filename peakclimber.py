@@ -4,10 +4,8 @@ import pandas as pd
 import seaborn as sns 
 import pybaselines
 import math
-from scipy.signal import find_peaks, savgol_filter
+from scipy.signal import find_peaks
 from scipy import special	
-from scipy.signal import get_window
-from lmfit.models import ExponentialGaussianModel
 import lmfit
 
 plt.rcParams.update(plt.rcParamsDefault)
@@ -79,10 +77,10 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=20, sampling_rate=50
         z numpy array with transformed signal 
     """
     k=pybaselines.whittaker.psalsa(data,lam=lamba)[0]
-    data=data-k
+    data=data
     z=low_pass_filter(data,band_limit,sampling_rate)
     z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
-    return z
+    return data
 def bemg(x,amplitude,center,sigma,gamma):
     return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(gamma))*special.erfc((-1*math.copysign(1, gamma)*(x-center)/sigma-sigma/(gamma))/math.sqrt(2))*math.copysign(1, gamma)*amplitude/(2*gamma)
 
@@ -302,77 +300,26 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     data=pd.DataFrame()
     data["Time"]=x
     data["Value"]=y
-    #smooths the data with a savgol filter and taeks first dderivative 
-    data.loc[:, 'Smoothed']=savgol_filter(y, window_length=101, polyorder=3, deriv=0)
-    data.loc[:, 'Time Ave']=savgol_filter(y, window_length=101, polyorder=3, deriv=1)
-    #data.loc[:, 'Time Ave']+=min(data.loc[:, 'Time Ave'])
     if graph:
         if ax is None:
-            print('here')
+
             fig,ax=plt.subplots(1,1,figsize=(10,10))
         else:
             ax=ax
         #plots derivative 
-        sns.lineplot(x=data['Time'], y=data['Smoothed'], label='Smoothed',ax=ax)
-    data["Inverse Smoothed"]=data.loc[:,'Smoothed']*-1+max(data.loc[:, 'Smoothed'])
-    data["Inverse Time Ave"]=data.loc[:,'Time Ave']*-1+max(data.loc[:, 'Time Ave'])
-    data["Moved Time Ave"]=data.loc[:,'Time Ave']+abs(min(data.loc[:, 'Time Ave']))
-    data["contrast"]=data.loc[:, 'Smoothed']- 50*data.loc[:, 'Time Ave']
-    """
-    if graph:
-        sns.lineplot(x=data['Time'], y=data['contrast'], label='Time Averaged First Derivative',ax=ax[1])
-    """
+        sns.lineplot(x=data['Time'], y=data['Value'], label='Signal',ax=ax)
+
     #finds peaks from the time averaged derivative. These are really inflection points not actually peaks, but this
     #method will correctly identify shoulders
     #finds real peaks 
 
-    peaks = find_peaks(data['Smoothed'],prominence=peak_prominence_cutoff,height=height_cutoff)[0]
-    pre_shoulder_times=find_peaks(data['contrast'],prominence=peak_prominence_cutoff*5,height=height_cutoff)[0]
-    shoulder_times=[]
-    for time in pre_shoulder_times:
-        add=True
-        for peak in peaks:
-            
-            if abs(peak-time)<200:
-                add=False
-                break
-        if add:
-            shoulder_times.append(time)
-    """
-    for potential_shoulder in peaks2: 
-
-        if data["Time Ave"].values[potential_shoulder]>=0:
-            pass 
-        else:
-            shoulder_times.append(potential_shoulder)
-    for potential_shoulder in valleys2: 
-
-        if data["Time Ave"].values[potential_shoulder]<=0:
-            pass 
-        else:
-            shoulder_times.append(potential_shoulder)
-    """
+    peaks = find_peaks(data['Value'],prominence=peak_prominence_cutoff,height=height_cutoff)[0]
     #plots IDed peaks on the underlying data 
     if graph:
-        sns.scatterplot(x=data["Time"].values[peaks], y=data["Smoothed"].values[peaks], s = 55,
+        sns.scatterplot(x=data["Time"].values[peaks], y=data["Value"].values[peaks], s = 55,
                  label = 'Peak Centers',ax=ax)
-        """
-        if shoulder:
-            sns.scatterplot(x=data["Time"].values[shoulder_times], y=data["contrast"].values[shoulder_times], s = 55,
-                     label = 'Peak Shoulders',ax=ax[1])
-        """    
         plt.show()
-    
-    times=data["Time"].values[peaks]
-    heights=data["Value"].values[peaks]
-    if shoulder:
-
-        for peak in shoulder_times:
-            if peak not in peaks:
-                peaks=np.append(peaks,peak)
-        
-   
-    
+       
     times=data["Time"].values[peaks]
     heights=data["Value"].values[peaks]
         
@@ -408,16 +355,20 @@ def find_peak_windows(x,y,reference_peak_list,heights,start,end):
         Bounds: start and end location of window 
 
     """
+    x=list(x)
+    y=list(y)
     windows=[]
     indices=[start]
     #finds all zeroes in graph 
-    for i,j in zip(y,x): 
-        if i<=0:
-            indices.append(j)
+    zc_idxs = np.where(np.diff(np.sign(y)))[0]+1 # indices of element before zero crossing
+    print(zc_idxs)
+    for k in zc_idxs:
+        indices.append(x[k])
     current_window=[]
     current_height=[]
     current_loc=[]
     current_index=0
+    indices.append(end)
     #starts lower bound at current index 
     bounds=[indices[current_index]]
     #iterates through all peaks and heights 
@@ -445,9 +396,11 @@ def find_peak_windows(x,y,reference_peak_list,heights,start,end):
     current_window=[current_loc,current_height,bounds]
     windows.append(current_window)
     
+
+    
         
 
-    return windows 
+    return windows
 def find_peak_areas(single_rep,start,end,name="graph",canonical_peaks=None,graph=False,shoulder=True,prominence_cutoff=0.05,height_cutoff=1,gamma_min=1,gamma_max=5,gamma_center=2,peak_variation=0.1,
                     sigma_min=0.05,sigma_max=0.2,sigma_center=0.1,height_scale=0.2,height_scale_high=1,ax=None):
     """
