@@ -148,17 +148,20 @@ Figure 12: Screenshot of Terminal listing contents of HPLC_Intestines working di
    
 > The fit depends a lot on the parameter space as well as the initial parameters used. Although there should be one optimal solution, the non-linear optimization will often stop before it has arrived at the “optimal solution”, leaving the user with a suboptimal fit. To combat this, I would recommend changing the parameters in the following ways depending on the issues that you are having: 
 
-> a.	**Peaks are generally too wide**: decrease sigma max and sigma default. 
+> a.	**Peaks are generally too wide**: decrease sigma max and sigma default. Also decrease gamma min and default 
 
-> b.	**Peaks are generally too narrow**: decrease sigma max and sigma default. 
+> b.	**Peaks are generally too narrow**: increase sigma max and sigma default. 
 
-> c.	**Tail is too long**: increase gamma min and gamma default.
+> c.	**Tail is too long**: decrease gamma min and gamma default.
 
 > d.	**Large regions of the graph are not covered by the fit**: you may be missing peaks (decrease your prominence and height cutoffs). Another solution could be to increase the default tail size by decreasing gamma default and decreasing gamma min. 
 
 4.	**I want to find the peak areas of a trace with both fronted and tailed peaks**
 
-> If the fronted/tailed peaks are independent of one another, you can fit different regions of the trace using different options for the fronted peaks checkbox (on for fronted regions, off for tailed regions). Unfortunately, PeakClimber does not currently support fits of regions with both fronted and tailed peaks due to constraints in the optimization algorithm. 
+> If the fronted/tailed peaks are independent of one another, you can fit different regions of the trace using different options for the fronted peaks checkbox (on for fronted regions, off for tailed regions). Unfortunately, PeakClimber does not currently support fits of regions with both fronted and tailed peaks due to constraints in the optimization algorithm.
+
+5. **My GC-mass spec fits are terrible!**
+>. Try lowering the sigma and gamma default and min. 
 
 
 
