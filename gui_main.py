@@ -76,6 +76,14 @@ def import_file(sample_name, window):
         end_timer.grid(row=0, column=3, sticky="w")
         update_button = tk.Button(master=new_entry, text="Update", command=lambda:[update_graph(start_timer.get(),end_timer.get(),hplc_df,sample_name,ax,canvas,window),clear(new_entry)])
         update_button.grid(row=0, column=4)
+        
+        # Persistent exit button fixed at row 4
+        exit_frame = tk.Frame(master=window)
+        exit_frame.grid(row=4, column=0, pady=5, sticky="se", padx=10)
+        window.grid_rowconfigure(4, weight=1)
+        window.grid_columnconfigure(0, weight=1)
+        exit_button = tk.Button(master=exit_frame, text="Exit", command=lambda: close(window))
+        exit_button.grid(row=0, column=0)
 
     else:
         close(window)
@@ -121,6 +129,8 @@ def update_graph(start, end, hplc_df, sample_name, ax, canvas, window):
     hei.grid(row=0, column=3, sticky="w")
     peaks = tk.Button(master=prominenceheight, text="Identify Peaks", command=lambda:find_peaks(x,z,start,end,hplc_df,hei.get(),prom.get(),ax,canvas,window,prominenceheight))
     peaks.grid(row=0, column=4)
+    
+
 
 
 def find_peaks(x, z, start, end, hplc_df, height, prominence, ax, canvas, window, prominenceheight_frame=None):
@@ -372,12 +382,5 @@ sample_namer.grid(row=0, column=1, sticky="w")
 import_button = tk.Button(master=frm_entry, text="Import File", command=lambda:[import_file(sample_namer.get(),window),clear(frm_entry)])
 import_button.grid(row=4, column=0)
 
-# Persistent exit button fixed at row 4
-exit_frame = tk.Frame(master=window)
-exit_frame.grid(row=4, column=0, pady=5, sticky="se", padx=10)
-window.grid_rowconfigure(5, weight=1)
-window.grid_columnconfigure(0, weight=1)
-exit_button = tk.Button(master=exit_frame, text="Exit", command=lambda: close(window))
-exit_button.grid(row=0, column=0)
 
 window.mainloop()
