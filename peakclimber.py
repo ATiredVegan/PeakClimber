@@ -4,7 +4,7 @@ import pandas as pd
 import seaborn as sns 
 import pybaselines
 import math
-from scipy.signal import find_peaks
+from scipy.signal import find_peaks, savgol_filter
 from scipy import special	
 import lmfit
 
@@ -78,7 +78,9 @@ def remove_noise(data, band_limit=2000,lamba=1e10,smoothing=10, sampling_rate=50
     """
     k=pybaselines.whittaker.psalsa(data,lam=lamba)[0]
     data=data-k
+    
     z=low_pass_filter(data,band_limit,sampling_rate)
+    z=np.convolve(z, np.ones(smoothing)/smoothing, mode='same')
     return z
 def bemg(x,amplitude,center,sigma,gamma):
     return np.exp(sigma*sigma/(2*gamma**2)+(center-x)/(gamma))*special.erfc((-1*math.copysign(1, gamma)*(x-center)/sigma-sigma/(gamma))/math.sqrt(2))*math.copysign(1, gamma)*amplitude/(2*gamma)
@@ -171,7 +173,7 @@ def model_n_expgaus(x,y,number_peaks,peak_locations,peak_heights,gamma_min=0.1,g
         amplitude=out.params['p'+str(n)+"_amplitude"].value
         gamma=out.params['p'+str(n)+"_gamma"].value
 
-        areas.append([center,sigma,amplitude, gamma,area/6])
+        areas.append([center,sigma,amplitude, gamma,area/3])
     
     return(areas)
 
@@ -262,7 +264,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None,add_text=1):
         if add_text==1:
             ax.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
     
-    plt.show()
+    #plt.show()
     plt.savefig(name+".png")
     #return areas
 def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,shoulder=False, shoulder_cutoffs=None,ax=None):
@@ -311,13 +313,12 @@ def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,sh
     #finds peaks from the time averaged derivative. These are really inflection points not actually peaks, but this
     #method will correctly identify shoulders
     #finds real peaks 
-
     peaks = find_peaks(data['Value'],prominence=peak_prominence_cutoff,height=height_cutoff)[0]
     #plots IDed peaks on the underlying data 
     if graph:
         sns.scatterplot(x=data["Time"].values[peaks], y=data["Value"].values[peaks], s = 55,
                  label = 'Peak Centers',ax=ax)
-        plt.show()
+        #plt.show()
        
     times=data["Time"].values[peaks]
     heights=data["Value"].values[peaks]
