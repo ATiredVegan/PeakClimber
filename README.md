@@ -66,13 +66,11 @@ and then running gui_main.py through the command line.
 
 >python gui_main.py
 
-Figure 4: Screenshot of Terminal to run PeakClimber.
-
 6.	Once you hit “enter”, a new window should pop up that looks like this:
 
 <img width="355" alt="image" src="https://github.com/user-attachments/assets/563edc50-37eb-4581-90f5-cc0fae49104b" />
  
-Figure 5: Screenshot of PeakClimber user interface to upload data.
+Figure 4: Screenshot of PeakClimber user interface to upload data.
 
 a.	It is not necessary to enter anything into the sample name box. If you do, future saved files (spreadsheets/graphs) will start with this name. If you do not wish to name your files now, simply click “import file” to upload your first HPLC sample.
 
@@ -82,7 +80,7 @@ b.	How do I know which file to choose from? If you’re interested in the fluore
 
 <img width="488" alt="image" src="https://github.com/user-attachments/assets/6ae0a0f6-94ea-4e73-b89b-77616b1667dc" />
  
-Figure 6: Screenshot of the first data trace loaded into PeakClimber
+Figure 5: Screenshot of the first data trace loaded into PeakClimber
 
 8.	Select the time range of the trace that you would like to analyze.
    
@@ -92,34 +90,34 @@ b.	Watch how the x-axis changes in the window below to focus on the specified ti
 
 <img width="502" alt="image" src="https://github.com/user-attachments/assets/47b87d24-c722-4216-ab38-390f132e1659" />
  
-Figure 7: Screenshot of HPLC trace cropped to the region of 5 min to 50 min as specified by the user. 
+Figure 6: Screenshot of HPLC trace cropped to the region of 5 min to 50 min as specified by the user. 
 
 9.	Now, identify peaks by changing the default prominence and height values.
    
-a.	In Figure 8, I used the default values for prominence and height and then I ran “identify peaks.”
+a.	In Figure 7, I used the default values for prominence and height and then I ran “identify peaks.”
 
 b.	Prominence is the minimum distance between a peak and the nearest valley. Height is the minimum peak height that will be counted. These values can be changed as many times as you like until you are satisfied with the identified peaks. 
 
 <img width="510" alt="image" src="https://github.com/user-attachments/assets/715ace42-9e5e-4290-a583-2aeffce4c07e" />
  
-Figure 8: Screenshot of HPLC trace cropped to the selected time region. Peak centers are identified by blue dots in the graph legend. 
+Figure 7: Screenshot of HPLC trace cropped to the selected time region. Peak centers are identified by blue dots in the graph legend. 
 
 <img width="344" alt="image" src="https://github.com/user-attachments/assets/970ab0de-f09c-478d-bb1f-9fd14c464732" />
  
-Figure 8.1: Screenshot of blank window labeled Figure 1 that may pop up. Close just this window to continue identifying peaks on your trace. This is a known bug!
+Figure 7.1: Screenshot of blank window labeled Figure 1 that may pop up. Close just this window to continue identifying peaks on your trace. This is a known bug!
 
 10.	On the next screen you will have a list of parameters options as shown in Figure 9. The only two options you should worry about initially are the Graph text and Fronted peaks. The former controls if you have text on your graphs (peak retention times), the later controls if your tail for ALL PEAKS is before or after the peak center. Unfortunately, there is an undefined region of the BEMG function around 0, so PeakClimber currently can only fit fronted or tailed peaks, but not a mixture. The other parameters control your fit: you should leave these as the default unless you are not satisfied with the quality of the fit (more in the FAQ below). 
   
 <img width="540" alt="image" src="https://github.com/user-attachments/assets/aea31c73-db17-451b-bc86-1a0315216002" />
 
-Figure 9: Parameter options for your fit. The checkboxes control if you see text on your graphs, or if you fit to a fronted peak rather than a traditionally tailed peak. The other options control the parameters that you will use for your fit.
+Figure 8: Parameter options for your fit. The checkboxes control if you see text on your graphs, or if you fit to a fronted peak rather than a traditionally tailed peak. The other options control the parameters that you will use for your fit.
 
 
 11.	When each peak is identified with a peak center, and you are happy with the parameter options, choose “Fit peaks.”
  
 <img width="451" alt="image" src="https://github.com/user-attachments/assets/b2a6e335-fe27-45e4-b57c-8f23c24d5884" />
 
-Figure 10: Screenshot of the fit peaks of the HPLC trace displaying the fit: the underlying trace is present in orange, the overall fit in blue, and the subcomponents are the shaded regions. The areas and runtimes of each peak are shown in a table below the trace image. 
+Figure 9: Screenshot of the fit peaks of the HPLC trace displaying the fit: the underlying trace is present in orange, the overall fit in blue, and the subcomponents are the shaded regions. The areas and runtimes of each peak are shown in a table below the trace image. 
 
 12.	Choose “save fit” to save the data to a csv file.
     
@@ -135,13 +133,13 @@ d.	Do not rely on copying the raw data table from this window. When analyzing mu
 13.	To analyze the next trace, choose “New File?” which will take you back to the import file interface in Figure 5. 
 <img width="312" alt="image" src="https://github.com/user-attachments/assets/c806b48a-6de8-47c8-95b1-0780d73b6bfb" />
  
-Figure 11: Screenshot of the interface to load your next trace or exit PeakClimber. 
+Figure 10: Screenshot of the interface to load your next trace or exit PeakClimber. 
 
 14.	Once you have fit the peaks for each of the HPLC traces and properly saved the data, your HPLC data folder should now contain .csv files for each sample.
 
 <img width="409" alt="image" src="https://github.com/user-attachments/assets/cfb92016-dcbd-47e8-bccb-5a9c40655877" />
  
-Figure 12: Screenshot of Terminal listing contents of HPLC_Intestines working directory. Here, I saved .csv files for peaks quantified from the Emission signal and from the CAD signal. 
+Figure 11: Screenshot of Terminal listing contents of HPLC_Intestines working directory. Here, I saved .csv files for peaks quantified from the Emission signal and from the CAD signal. 
  
 
 
