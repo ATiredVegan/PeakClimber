@@ -10,8 +10,8 @@ To provide step-by-step command line instructions for the average user to analyz
 1.	After the HPLC run, appropriately name each trace. Move your data to a proper storage location (Data backup, server, Cloud service, etc.)
 2.	Copy your data folder to your Desktop (or any other folder ou would prefer to work in) to work locally from now on.
 a.	Making an additional copy of the HPLC traces folder on the Desktop can make navigating to the data via terminal more efficient
-3.	Download gui_main.py, peakclimber.py, requirements.txt, and setup.sh from https://github.com/ATiredVegan/PeakClimber
-4.	After download, place gui_main.py, peakclimber.py, requirements.txt, and setup.sh in a convenient folder that you will be able to navigate to via terminal. 
+3.	Download gui_main.py, peakclimber.py, requirements.txt, run_peakclimber.command, and setup.sh from https://github.com/ATiredVegan/PeakClimber
+4.	After download, place gui_main.py, peakclimber.py, requirements.txt, run_peakclimber.command and setup.sh in a convenient folder that you will be able to navigate to via terminal. 
 a.	For this example, I am analyzing 4 samples (labeled 1, 2, 5, and 6)
 
 
@@ -29,7 +29,7 @@ b.	ctrl + alt + “t” will also open the terminal application quickly on a PC;
 
 Figure 2: Screenshot of the Terminal application window upon opening.
 
-2. Make sure you have Python and pip installed to run this package. You will want to install python by downloading *version 3.12.7* from this link (https://www.python.org/downloads/release/python-3127/). Once you have python installed, run the following command to install pip
+2. Make sure you have Python and pip installed to run this package. You will want to install python by downloading **python 3.10-3.12** from this link (https://www.python.org/downloads/release/python-3127/). Once you have python installed, run the following command to install pip
 
 > python -m pip install --upgrade pip
 
@@ -51,16 +51,23 @@ Figure 3: Screenshot of Terminal to navigate to HPLC data folder and listing out
 > bash setup.sh 
 
 
-5. Now that you’re in your data folder, you can run PeakClimber!
+5. Now that you’re in your data folder, you can run PeakClimber in one of two ways!
+
+	a. Double-click run_peakclimber.command
+	b. run bash run_peakclimber.command in Terminal
+
+<img width="686" height="22" alt="Screenshot 2026-10-16 at 4 00 07 PM" src="https://github.com/user-attachments/assets/a6564afa-8a28-4cdf-8ead-cd9413adf653" />
+
+This will currently only work on Linux and Mac. I am planning on adding windows support very soon. If you are running a windows machine, you can still use peakclimber by installing the requirements.txt manually:  
+> python -m pip install -r requirements.txt
+
+and then running gui_main.py through the command line. 
 
 >python gui_main.py
 
-<img width="472" alt="image" src="https://github.com/user-attachments/assets/5071ab0b-acbe-4d7b-ab16-eb624c149e03" />
-
-
 Figure 4: Screenshot of Terminal to run PeakClimber.
 
-5.	Once you hit “enter”, a new window should pop up that looks like this:
+6.	Once you hit “enter”, a new window should pop up that looks like this:
 
 <img width="355" alt="image" src="https://github.com/user-attachments/assets/563edc50-37eb-4581-90f5-cc0fae49104b" />
  
@@ -70,13 +77,13 @@ a.	It is not necessary to enter anything into the sample name box. If you do, fu
 
 b.	How do I know which file to choose from? If you’re interested in the fluorescent signal, you’ll open Emission.txt files. If you’re interested in total lipids (non-fluorescent), you’ll import the CAD file for that sample.
 
-6.	Once you import your first data file, PeakClimber will load the trace in this window (Figure 6):
+7.	Once you import your first data file, PeakClimber will load the trace in this window (Figure 6):
 
 <img width="488" alt="image" src="https://github.com/user-attachments/assets/6ae0a0f6-94ea-4e73-b89b-77616b1667dc" />
  
 Figure 6: Screenshot of the first data trace loaded into PeakClimber
 
-7.	Select the time range of the trace that you would like to analyze.
+8.	Select the time range of the trace that you would like to analyze.
    
 a.	For this trace, I’m most interested in quantifying peaks between 5 min and 50 min
 
@@ -86,7 +93,7 @@ b.	Watch how the x-axis changes in the window below to focus on the specified ti
  
 Figure 7: Screenshot of HPLC trace cropped to the region of 5 min to 50 min as specified by the user. 
 
-8.	Now, identify peaks by changing the default prominence and height values.
+9.	Now, identify peaks by changing the default prominence and height values.
    
 a.	In Figure 8, I used the default values for prominence and height and then I ran “identify peaks.”
 
@@ -100,20 +107,20 @@ Figure 8: Screenshot of HPLC trace cropped to the selected time region. Peak cen
  
 Figure 8.1: Screenshot of blank window labeled Figure 1 that may pop up. Close just this window to continue identifying peaks on your trace. This is a known bug!
 
-9.	On the next screen you will have a list of parameters options as shown in Figure 9. The only two options you should worry about initially are the Graph text and Fronted peaks. The former controls if you have text on your graphs (peak retention times), the later controls if your tail for ALL PEAKS is before or after the peak center. Unfortunately, there is an undefined region of the BEMG function around 0, so PeakClimber currently can only fit fronted or tailed peaks, but not a mixture. The other parameters control your fit: you should leave these as the default unless you are not satisfied with the quality of the fit (more in the FAQ below). 
+10.	On the next screen you will have a list of parameters options as shown in Figure 9. The only two options you should worry about initially are the Graph text and Fronted peaks. The former controls if you have text on your graphs (peak retention times), the later controls if your tail for ALL PEAKS is before or after the peak center. Unfortunately, there is an undefined region of the BEMG function around 0, so PeakClimber currently can only fit fronted or tailed peaks, but not a mixture. The other parameters control your fit: you should leave these as the default unless you are not satisfied with the quality of the fit (more in the FAQ below). 
   
 <img width="540" alt="image" src="https://github.com/user-attachments/assets/aea31c73-db17-451b-bc86-1a0315216002" />
 
 Figure 9: Parameter options for your fit. The checkboxes control if you see text on your graphs, or if you fit to a fronted peak rather than a traditionally tailed peak. The other options control the parameters that you will use for your fit.
 
 
-10.	When each peak is identified with a peak center, and you are happy with the parameter options, choose “Fit peaks.”
+11.	When each peak is identified with a peak center, and you are happy with the parameter options, choose “Fit peaks.”
  
 <img width="451" alt="image" src="https://github.com/user-attachments/assets/b2a6e335-fe27-45e4-b57c-8f23c24d5884" />
 
 Figure 10: Screenshot of the fit peaks of the HPLC trace displaying the fit: the underlying trace is present in orange, the overall fit in blue, and the subcomponents are the shaded regions. The areas and runtimes of each peak are shown in a table below the trace image. 
 
-11.	Choose “save fit” to save the data to a csv file.
+12.	Choose “save fit” to save the data to a csv file.
     
 a.	PeakClimber will prompt you to name this .csv file and you can save it in the same folder as you the original HPLC traces.
 
@@ -124,12 +131,12 @@ c.	You can save the current view of the trace by hitting the save symbol in the 
 d.	Do not rely on copying the raw data table from this window. When analyzing multiple HPLC traces, avoid aggregating lots of csv files by copying and pasting each data table into one Excel spreadsheet. It is possible to highlight all the values in the table by clicking on the first row, then, while holding down the “shift” key (for Mac or for PC) scroll to click on the last value. However, command + “c” will not copy these values to your clipboard. 
 
 
-12.	To analyze the next trace, choose “New File?” which will take you back to the import file interface in Figure 5. 
+13.	To analyze the next trace, choose “New File?” which will take you back to the import file interface in Figure 5. 
 <img width="312" alt="image" src="https://github.com/user-attachments/assets/c806b48a-6de8-47c8-95b1-0780d73b6bfb" />
  
 Figure 11: Screenshot of the interface to load your next trace or exit PeakClimber. 
 
-12.	Once you have fit the peaks for each of the HPLC traces and properly saved the data, your HPLC data folder should now contain .csv files for each sample.
+14.	Once you have fit the peaks for each of the HPLC traces and properly saved the data, your HPLC data folder should now contain .csv files for each sample.
 
 <img width="409" alt="image" src="https://github.com/user-attachments/assets/cfb92016-dcbd-47e8-bccb-5a9c40655877" />
  
