@@ -8,10 +8,10 @@ To provide step-by-step command line instructions for the average user to analyz
 # Materials:
 
 1.	After the HPLC run, appropriately name each trace. Move your data to a proper storage location (Data backup, server, Cloud service, etc.)
-2.	Copy your data folder to your Desktop to work locally from now on.
+2.	Copy your data folder to your Desktop (or any other folder ou would prefer to work in) to work locally from now on.
 a.	Making an additional copy of the HPLC traces folder on the Desktop can make navigating to the data via terminal more efficient
 3.	Download gui_main.py, peakclimber.py, requirements.txt, and setup.sh from https://github.com/ATiredVegan/PeakClimber
-4.	After download, place gui_main.py, peakclimber.py, requirements.txt, and setup.sh in the same Desktop folder as your HPLC traces
+4.	After download, place gui_main.py, peakclimber.py, requirements.txt, and setup.sh in a convenient folder that you will be able to navigate to via terminal. 
 a.	For this example, I am analyzing 4 samples (labeled 1, 2, 5, and 6)
 
 
@@ -29,7 +29,7 @@ b.	ctrl + alt + “t” will also open the terminal application quickly on a PC;
 
 Figure 2: Screenshot of the Terminal application window upon opening.
 
-2. Make sure you have Python and pip installed to run this package. You will want to install python by downloading version 3.12.7 from this link (https://www.python.org/downloads/release/python-3127/). Once you have python installed, run the following command to install pip
+2. Make sure you have Python and pip installed to run this package. You will want to install python by downloading *version 3.12.7* from this link (https://www.python.org/downloads/release/python-3127/). Once you have python installed, run the following command to install pip
 
 > python -m pip install --upgrade pip
 
@@ -49,7 +49,6 @@ Figure 3: Screenshot of Terminal to navigate to HPLC data folder and listing out
 4. Install all dependencies. Run the bash script setup.sh by typing. You only need to do this once.
 
 > bash setup.sh 
-
 
 
 5. Now that you’re in your data folder, you can run PeakClimber!
@@ -139,12 +138,14 @@ Figure 12: Screenshot of Terminal listing contents of HPLC_Intestines working di
 
 
 # FAQ: 
+1. **I'm having trouble installing the package because key dependencies won't install. How can I use PeakClimber still?**
+> Make sure that you are using the correct **python version** (3.12.7). You can check your python version by typing the following command into terminal: python --version. I am currently working to upgrade PeakClimber to python 3.13. If you continue to have dependency issues please open an issue on the GitHub. 
 
-1.	**PeakClimber is Identifying too many/too few peaks. How do I fix this?**
+3.	**PeakClimber is Identifying too many/too few peaks. How do I fix this?**
      
 >The easiest thing to do is adjust the height and prominence cutoffs until you are satisfied with the identified peaks. If you are unable to correctly identify peaks across the whole graph, try subdividing the graph into regions where you can home in on specific height/prominence cutoffs 
 
-2.	**I’m not happy with the fits. What do I do?**
+3.	**I’m not happy with the fits. What do I do?**
    
 > The fit depends a lot on the parameter space as well as the initial parameters used. Although there should be one optimal solution, the non-linear optimization will often stop before it has arrived at the “optimal solution”, leaving the user with a suboptimal fit. To combat this, I would recommend changing the parameters in the following ways depending on the issues that you are having: 
 
