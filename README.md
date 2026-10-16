@@ -54,6 +54,7 @@ Figure 3: Screenshot of Terminal to navigate to HPLC data folder and listing out
 5. Now that you’re in your data folder, you can run PeakClimber in one of two ways!
 
 	a. Double-click run_peakclimber.command
+
 	b. run bash run_peakclimber.command in Terminal
 
 <img width="686" height="22" alt="Screenshot 2026-10-16 at 4 00 07 PM" src="https://github.com/user-attachments/assets/a6564afa-8a28-4cdf-8ead-cd9413adf653" />
