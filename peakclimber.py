@@ -265,7 +265,7 @@ def graph_n_expgaus(x,y,number_peaks,parameters,name,ax=None,add_text=1):
             ax.text(out.params['p'+str(n)+"_center"].value, out.params['p'+str(n)+"_amplitude"].value+1, str(out.params['p'+str(n)+"_center"].value)[0:5], fontsize=8,horizontalalignment='center')
     
     #plt.show()
-    plt.savefig(name+".png")
+    ax.figure.savefig(name+".png")
     #return areas
 def find_locations_peaks(x,y,peak_prominence_cutoff,height_cutoff,graph=False,shoulder=False, shoulder_cutoffs=None,ax=None):
     """
